@@ -22,17 +22,19 @@ target_include_directories(IFWUpdateChecker INTERFACE src)
 ## Deps : tinyProcessLib ##
 ###########################
 
-#link
+# add
 add_subdirectory(deps/tiny-process-library EXCLUDE_FROM_ALL)
+
+#link
 target_link_libraries(IFWUpdateChecker INTERFACE tiny-process-library)
 
-#########################################
-## Find libraries upon which work with ##
-#########################################
+###################
+## Deps : spdlog ##
+###################
 
-# for logging
+# fetch
 if(NOT TARGET spdlog::spdlog)
-    find_package(spdlog)
+    find_package(spdlog QUIET)
     if(NOT spdlog_FOUND)
         message("Including [spdlog] !")
             Include(FetchContent)
@@ -44,13 +46,22 @@ if(NOT TARGET spdlog::spdlog)
     endif()
 endif()
 
-# for network
+# link
+target_link_libraries(IFWUpdateChecker PRIVATE spdlog::spdlog)
 
-#TODO
+###################
+## Deps : StupidHTTPDownloader ##
+###################
 
-##########
-## TESTS #
-##########
+# add
+add_subdirectory(deps/StupidHTTPDownloader)
+
+# link
+target_link_libraries(IFWUpdateChecker PRIVATE StupidHTTPDownloader)
+
+###########
+## TESTS ##
+###########
 
 #dont build tests if included as submodule
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)

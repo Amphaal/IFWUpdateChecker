@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <functional>
 #include <string>
 #include <regex>
@@ -29,16 +31,14 @@
 #include <future>
 #include <map>
 
-#include <spdlog/spdlog.h>
-#include <SHTTPD.hpp>
-
+#include <StupidHTTPDownloader.hpp>
 #include <process.hpp>
 
 class UpdateChecker_Private {
  public:
     static std::string _getRemoteManifestContent() {
         spdlog::info("UpdateChecker : Downloading remote manifest [{}, {}]", APP_REPOSITORY_HOST, APP_REPOSITORY_COMMAND);
-        return SHTTPD::DownloadHTTPFile(APP_REPOSITORY_HOST, APP_REPOSITORY_COMMAND);
+        return StupidHTTPDownloader::DownloadHTTPFile(APP_REPOSITORY_HOST, APP_REPOSITORY_COMMAND);
     }
 
     static std::string _getLocalManifestContent() {
