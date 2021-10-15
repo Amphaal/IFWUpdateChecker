@@ -108,7 +108,7 @@ class UpdateChecker_Private {
 
         // TODO(amphaal) MacOS ?
         #ifdef WIN32
-            std::string installerExec = "maintenancetool.exe";
+            std::string installerExec = "../maintenancetool.exe";
         #else
             std::string installerExec = "maintenancetool";
         #endif
@@ -122,7 +122,12 @@ class UpdateChecker : private UpdateChecker_Private {
  public:
     explicit UpdateChecker(const std::string &remoteManifestURL) : _remoteManifestURL(remoteManifestURL) {}
 
-    std::future<bool> isNewerVersionAvailable() const {
+    struct CheckResults {
+        bool checkSucceeded = false;
+        bool hasNewerVersion = false;
+    };
+
+    std::future<CheckResults> isNewerVersionAvailable() const {
         return std::async(&UpdateChecker::_isNewerVersionAvailable, this);
     }
 
@@ -151,34 +156,37 @@ class UpdateChecker : private UpdateChecker_Private {
  private:
     const std::string _remoteManifestURL;
 
-    static bool _warn(const char* str) {
-        spdlog::warn("UpdateChecker : Error while fetching {} manifest !", str);
-        return false;
-    }
-
-    bool _isNewerVersionAvailable() const {
+    CheckResults _isNewerVersionAvailable() const {
         //
         spdlog::info("UpdateChecker : Checking updates...");
 
         // if no remoteManifest given, skip
         if(_remoteManifestURL.empty()) {
             spdlog::warn("UpdateChecker : no remote manifest url configured !");
-            return false;
+            return {};
         }
 
         // fetch local
-        std::map<std::string, std::string> localComponents;
         auto localRaw = _getLocalManifestContent();
-        if (localRaw.empty()) return _warn("local");
-        localComponents = _extractVersionsFromManifest(localRaw);
-        if (!localComponents.size()) return _warn("local");
+        if (localRaw.empty()) {
+            return _manifestFetchingFailed("local");
+        }
+
+        auto localComponents = _extractVersionsFromManifest(localRaw);
+        if (!localComponents.size()) {
+            return _manifestFetchingFailed("local");
+        }
 
         // fetch remote
-        std::map<std::string, std::string> remoteVersions;
         auto remoteRaw = _getRemoteManifestContent();
-        if (remoteRaw.empty()) return _warn("remote");
-        remoteVersions = _extractVersionsFromManifest(remoteRaw);
-        if (!remoteVersions.size()) return _warn("remote");
+        if (remoteRaw.empty()) {
+            return _manifestFetchingFailed("remote");
+        }
+
+        auto remoteVersions = _extractVersionsFromManifest(remoteRaw);
+        if (!remoteVersions.size()) {
+            return _manifestFetchingFailed("remote");
+        }
 
         // iterate through local components
         for (auto &[component, localVersion] : localComponents) {
@@ -186,7 +194,7 @@ class UpdateChecker : private UpdateChecker_Private {
             auto foundOnRemote = remoteVersions.find(component);
             if (foundOnRemote == remoteVersions.end()) {
                 spdlog::info("UpdateChecker : Local component [{}] not found on remote", component);
-                return true;
+                return {true, true};
             }
 
             // compare versions
@@ -194,7 +202,7 @@ class UpdateChecker : private UpdateChecker_Private {
             auto isNewer = _isRemoteVersionNewerThanLocal(localVersion, remoteVersion);
             if (isNewer) {
                 spdlog::info("UpdateChecker : Local component [{} : {}] older than remote [{}]", component, localVersion, remoteVersion);
-                return true;
+                return {true, true};
             }
 
             // if not older, remove from remote
@@ -206,11 +214,16 @@ class UpdateChecker : private UpdateChecker_Private {
         if (remoteVersions.size()) {
             auto &firstComponent = remoteVersions.begin()->first;
             spdlog::info("UpdateChecker : Remote component [{}] not found in local", firstComponent);
-            return true;
+            return {true, true};
         }
 
         //
         spdlog::info("UpdateChecker : No components to be updated");
-        return false;
+        return {true, false};
+    }
+    
+    static CheckResults _manifestFetchingFailed(const char* manifestType) {
+        spdlog::warn("UpdateChecker : Error while fetching {} manifest !", manifestType);
+        return {};
     }
 };
