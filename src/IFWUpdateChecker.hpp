@@ -1,5 +1,5 @@
 // IFWUpdateChecker
-// Check if an IFW package has updates
+// In-app simple helper to check if a Qt IFW package has updates
 // Copyright (C) 2021 Guillaume Vara <guillaume.vara@gmail.com>
 
 // This program is free software: you can redistribute it and/or modify
@@ -120,17 +120,13 @@ class UpdateChecker_Private {
 
 class UpdateChecker : private UpdateChecker_Private {
  public:
-    UpdateChecker() {}
     explicit UpdateChecker(const std::string &remoteManifestURL) : _remoteManifestURL(remoteManifestURL) {}
 
     std::future<bool> isNewerVersionAvailable() const {
-        return std::async(_isNewerVersionAvailable);
+        return std::async(&UpdateChecker::_isNewerVersionAvailable, this);
     }
 
     std::string _getRemoteManifestContent() const {
-        // if no remoteManifest given, skip
-        if(_remoteManifestURL.empty()) return _remoteManifestURL;
-
         // else, try to download it
         spdlog::info("UpdateChecker : Downloading remote manifest [{}]", _remoteManifestURL);
         return Downloader::dumbGet(_remoteManifestURL).messageBody;
@@ -163,6 +159,12 @@ class UpdateChecker : private UpdateChecker_Private {
     bool _isNewerVersionAvailable() const {
         //
         spdlog::info("UpdateChecker : Checking updates...");
+
+        // if no remoteManifest given, skip
+        if(_remoteManifestURL.empty()) {
+            spdlog::warn("UpdateChecker : no remote manifest url configured !");
+            return false;
+        }
 
         // fetch local
         std::map<std::string, std::string> localComponents;

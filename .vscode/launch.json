@@ -8,9 +8,9 @@
             "name": "Lancer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/IFWUpdateChecker_tests",
+            "program": "${workspaceFolder}/build/tests/IFWUC_tests",
             "windows": {
-                "program": "${workspaceFolder}/build/IFWUpdateChecker_tests.exe",
+                "program": "${workspaceFolder}/build/tests/IFWUC_tests.exe",
                 "miDebuggerPath": "${env:MINGW64_ROOT}\\bin\\gdb.exe",
                 "MIMode": "gdb",
                 "setupCommands": [
@@ -19,8 +19,7 @@
                         "text": "-enable-pretty-printing",
                         "ignoreFailures": true
                     }
-                ],
-                "externalConsole": true // TODO : unset once bug is fixed
+                ]
             },
             "args": [],
             "stopAtEntry": false,

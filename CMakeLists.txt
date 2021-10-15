@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project(IFWUpdateChecker
     VERSION 0.0.1
-    DESCRIPTION "Check if an IFW package has updates"
+    DESCRIPTION "In-app simple helper to check if a Qt IFW package has updates"
     HOMEPAGE_URL "https://github.com/Amphaal/IFWUpdateChecker"
     LANGUAGES CXX
 )
@@ -36,7 +36,7 @@ target_link_libraries(IFWUpdateChecker INTERFACE tiny-process-library)
 add_subdirectory(deps/StupidHTTPDownloader)
 
 # link
-target_link_libraries(IFWUpdateChecker PRIVATE StupidHTTPDownloader)
+target_link_libraries(IFWUpdateChecker INTERFACE StupidHTTPDownloader)
 
 ###################
 ## Deps : spdlog ##
@@ -46,7 +46,7 @@ target_link_libraries(IFWUpdateChecker PRIVATE StupidHTTPDownloader)
 find_package(spdlog REQUIRED)
 
 # link
-target_link_libraries(IFWUpdateChecker PRIVATE spdlog::spdlog)
+target_link_libraries(IFWUpdateChecker INTERFACE spdlog::spdlog)
 
 ###########
 ## TESTS ##

@@ -13,7 +13,8 @@
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/deps/tiny-process-library",
-                "${workspaceFolder}/deps/StupidHTTPDownloaded/include"
+                "${workspaceFolder}/deps/StupidHTTPDownloader/include",
+                "${workspaceFolder}/src"
             ],
             "defines": [
                 "_DEBUG",
@@ -24,7 +25,7 @@
             "compilerPath": "${env:MINGW64_ROOT}/bin/clang++.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "windows-clang-x64"
         },
         {
             "name": "MacOS",
