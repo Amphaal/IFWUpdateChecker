@@ -1,6 +1,3 @@
 [submodule "deps/tiny-process-library"]
 	path = deps/tiny-process-library
 	url = https://gitlab.com/eidheim/tiny-process-library
-[submodule "deps/StupidHTTPDownloader"]
-	path = deps/StupidHTTPDownloader
-	url = https://github.com/Amphaal/StupidHTTPDownloader
