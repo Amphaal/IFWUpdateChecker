@@ -11,7 +11,9 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/deps/tiny-process-library",
+                "${workspaceFolder}/deps/StupidHTTPDownloaded/include"
             ],
             "defines": [
                 "_DEBUG",

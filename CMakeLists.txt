@@ -28,36 +28,25 @@ add_subdirectory(deps/tiny-process-library EXCLUDE_FROM_ALL)
 #link
 target_link_libraries(IFWUpdateChecker INTERFACE tiny-process-library)
 
-###################
-## Deps : spdlog ##
-###################
-
-# fetch
-if(NOT TARGET spdlog::spdlog)
-    find_package(spdlog QUIET)
-    if(NOT spdlog_FOUND)
-        message("Including [spdlog] !")
-            Include(FetchContent)
-            FetchContent_Declare(spdlog
-                GIT_REPOSITORY "https://github.com/gabime/spdlog"
-                GIT_TAG "v1.x"
-            )
-            FetchContent_MakeAvailable(spdlog)
-    endif()
-endif()
-
-# link
-target_link_libraries(IFWUpdateChecker PRIVATE spdlog::spdlog)
-
-###################
+#################################
 ## Deps : StupidHTTPDownloader ##
-###################
+#################################
 
 # add
 add_subdirectory(deps/StupidHTTPDownloader)
 
 # link
 target_link_libraries(IFWUpdateChecker PRIVATE StupidHTTPDownloader)
+
+###################
+## Deps : spdlog ##
+###################
+
+# fetch
+find_package(spdlog REQUIRED)
+
+# link
+target_link_libraries(IFWUpdateChecker PRIVATE spdlog::spdlog)
 
 ###########
 ## TESTS ##

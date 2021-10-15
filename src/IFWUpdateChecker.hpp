@@ -20,6 +20,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <StupidHTTPDownloader/Downloader.h>
 
 #include <functional>
 #include <string>
@@ -31,16 +32,10 @@
 #include <future>
 #include <map>
 
-#include <StupidHTTPDownloader.hpp>
 #include <process.hpp>
 
 class UpdateChecker_Private {
  public:
-    static std::string _getRemoteManifestContent() {
-        spdlog::info("UpdateChecker : Downloading remote manifest [{}, {}]", APP_REPOSITORY_HOST, APP_REPOSITORY_COMMAND);
-        return StupidHTTPDownloader::DownloadHTTPFile(APP_REPOSITORY_HOST, APP_REPOSITORY_COMMAND);
-    }
-
     static std::string _getLocalManifestContent() {
         // check existence
         auto absolute = std::filesystem::absolute("../components.xml");
@@ -125,8 +120,20 @@ class UpdateChecker_Private {
 
 class UpdateChecker : private UpdateChecker_Private {
  public:
-    static std::future<bool> isNewerVersionAvailable() {
+    UpdateChecker() {}
+    explicit UpdateChecker(const std::string &remoteManifestURL) : _remoteManifestURL(remoteManifestURL) {}
+
+    std::future<bool> isNewerVersionAvailable() const {
         return std::async(_isNewerVersionAvailable);
+    }
+
+    std::string _getRemoteManifestContent() const {
+        // if no remoteManifest given, skip
+        if(_remoteManifestURL.empty()) return _remoteManifestURL;
+
+        // else, try to download it
+        spdlog::info("UpdateChecker : Downloading remote manifest [{}]", _remoteManifestURL);
+        return Downloader::dumbGet(_remoteManifestURL).messageBody;
     }
 
     // returns if successfully requested updater to run
@@ -141,17 +148,19 @@ class UpdateChecker : private UpdateChecker_Private {
         spdlog::info("UpdateChecker : Launching updater [{}] ...", updaterPath.string());
         TinyProcessLib::Process run(args);
 
-        spdlog::info("UpdateChecker : Quitting {} ...", APP_NAME);
+        spdlog::info("UpdateChecker : Quitting ...");
         return true;
     }
 
  private:
+    const std::string _remoteManifestURL;
+
     static bool _warn(const char* str) {
         spdlog::warn("UpdateChecker : Error while fetching {} manifest !", str);
         return false;
     }
 
-    static bool _isNewerVersionAvailable() {
+    bool _isNewerVersionAvailable() const {
         //
         spdlog::info("UpdateChecker : Checking updates...");
 
