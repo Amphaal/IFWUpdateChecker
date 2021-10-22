@@ -137,7 +137,7 @@ class UpdateChecker : private UpdateChecker_Private {
         bool hasNewerVersion = false;
     };
 
-    std::future<CheckResults> isNewerVersionAvailable() const {
+    std::future<const CheckResults> isNewerVersionAvailable() const {
         return std::async(&UpdateChecker::_isNewerVersionAvailable, this);
     }
 
@@ -166,7 +166,7 @@ class UpdateChecker : private UpdateChecker_Private {
  private:
     const std::string _remoteManifestURL;
 
-    CheckResults _isNewerVersionAvailable() const {
+    const CheckResults _isNewerVersionAvailable() const {
         //
         spdlog::info("UpdateChecker : Checking updates...");
 
