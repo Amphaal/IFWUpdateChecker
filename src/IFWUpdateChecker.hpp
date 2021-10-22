@@ -155,7 +155,7 @@ class UpdateChecker : private UpdateChecker_Private {
         }
 
         // run
-        std::vector<std::string> args {updaterPath.string(), "--updater"};
+        std::vector<std::wstring> args {updaterPath.wstring(), L"--updater"};
         spdlog::info("UpdateChecker : Launching updater [{}] ...", updaterPath.string());
         TinyProcessLib::Process run(args);
 
