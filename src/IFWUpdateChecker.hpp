@@ -137,8 +137,12 @@ class UpdateChecker : private UpdateChecker_Private {
         bool hasNewerVersion = false;
     };
 
-    std::future<const CheckResults> isNewerVersionAvailable() const {
-        return std::async(&UpdateChecker::_isNewerVersionAvailable, this);
+    std::future<const CheckResults> isNewerVersionAvailableAsync() const {
+        return std::async(&UpdateChecker::isNewerVersionAvailable, this);
+    }
+
+    const CheckResults isNewerVersionAvailable() const {
+        return _isNewerVersionAvailable();
     }
 
     std::string _getRemoteManifestContent() const {
