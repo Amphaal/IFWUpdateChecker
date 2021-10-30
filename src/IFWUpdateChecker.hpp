@@ -159,7 +159,11 @@ class UpdateChecker : private UpdateChecker_Private {
         }
 
         // run
-        std::vector<std::wstring> args {updaterPath.wstring(), L"--updater"};
+        #if defined UNICODE && defined _WIN32
+            std::vector<std::wstring> args {updaterPath.wstring(), L"--updater"};
+        #else
+             std::vector<std::string> args {updaterPath.string(), "--updater"};
+        #endif
         spdlog::info("UpdateChecker : Launching updater [{}] ...", updaterPath.string());
         TinyProcessLib::Process run(args);
 
@@ -239,7 +243,7 @@ class UpdateChecker : private UpdateChecker_Private {
         spdlog::info("UpdateChecker : No components to be updated");
         return {CheckCode::Succeeded, false};
     }
-    
+
     static void _manifestFetchingFailed(const char* manifestType) {
         spdlog::warn("UpdateChecker : Error while fetching {} manifest !", manifestType);
     }
