@@ -103,7 +103,7 @@ class UpdateChecker_Private {
         return localVersion < remoteVersion;
     }
 
-    static std::filesystem::path _exectedMaintenanceToolPath() {
+    static std::filesystem::path _expectedMaintenanceToolPath() {
         auto installerDir = std::filesystem::current_path().parent_path();
 
         // TODO(amphaal) MacOS ?
@@ -152,7 +152,7 @@ class UpdateChecker : private UpdateChecker_Private {
     }
 
     // returns if successfully requested updater to run
-    static bool tryToLaunchUpdater(const std::filesystem::path &updaterPath = _exectedMaintenanceToolPath()) {
+    static bool tryToLaunchUpdater(const std::filesystem::path &updaterPath = _expectedMaintenanceToolPath()) {
         if (!std::filesystem::exists(updaterPath)) {
             spdlog::warn("UpdateChecker : Cannot find updater at [{}], aborting", updaterPath.string());
             return false;
@@ -160,14 +160,17 @@ class UpdateChecker : private UpdateChecker_Private {
 
         // run
         #if defined UNICODE && defined _WIN32
-            std::vector<std::wstring> args {updaterPath.wstring(), L"--updater"};
+            std::vector<TinyProcessLib::Process::string_type> args {updaterPath.wstring(), L"--updater"};
         #else
-             std::vector<std::string> args {updaterPath.string(), "--updater"};
+            std::vector<TinyProcessLib::Process::string_type> args {updaterPath.string(), "--updater"};
         #endif
+
         spdlog::info("UpdateChecker : Launching updater [{}] ...", updaterPath.string());
-        TinyProcessLib::Process run(args);
+        
+            TinyProcessLib::Process run(args);
 
         spdlog::info("UpdateChecker : Quitting ...");
+
         return true;
     }
 
