@@ -107,7 +107,7 @@ class UpdateChecker_Private {
         auto installerDir = std::filesystem::current_path().parent_path();
 
         // TODO(amphaal) MacOS ?
-        #ifdef WIN32
+        #ifdef _WIN32
             std::string installerExec = "../maintenancetool.exe";
         #else
             std::string installerExec = "maintenancetool";

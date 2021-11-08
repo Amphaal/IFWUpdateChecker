@@ -26,7 +26,11 @@ target_include_directories(IFWUpdateChecker INTERFACE src)
 add_subdirectory(deps/tiny-process-library EXCLUDE_FROM_ALL)
 
 #link
-target_link_libraries(IFWUpdateChecker INTERFACE tiny-process-library)
+target_link_libraries(IFWUpdateChecker INTERFACE tiny-process-library::tiny-process-library)
+
+if(WIN32)
+    target_compile_definitions(tiny-process-library PUBLIC UNICODE)
+endif()
 
 #################################
 ## Deps : StupidHTTPDownloader ##
