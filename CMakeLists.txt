@@ -15,8 +15,17 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## IFWUpdateChecker lib ##
 ##########################
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/templates/_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
+)
+
 add_library(IFWUpdateChecker INTERFACE)
-target_include_directories(IFWUpdateChecker INTERFACE src)
+target_include_directories(IFWUpdateChecker 
+    INTERFACE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_BINARY_DIR}/generated
+)
 
 ###########################
 ## Deps : tinyProcessLib ##

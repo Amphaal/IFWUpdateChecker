@@ -20,9 +20,6 @@
 #define CATCH_CONFIG_MAIN
 
 #include <catch2/catch.hpp>
-
-#include <catch2/catch.hpp>
-
 #include "IFWUpdateChecker.hpp"
 
 TEST_CASE("Version comparaison", "[update checker]") {
