@@ -34,13 +34,15 @@
 
 #include <process.hpp>
 
+#include <version.h>
+
 class UpdateChecker_Private {
  public:
     static std::string _getLocalManifestContent() {
         // check existence
         auto absolute = std::filesystem::absolute("../components.xml");
         if (!std::filesystem::exists(absolute)) {
-            spdlog::warn("UpdateChecker : No local manifest found at [{}]", absolute.string());
+            spdlog::warn("[IFW] UpdateChecker : No local manifest found at [{}]", absolute.string());
             return std::string();
         }
 
@@ -48,18 +50,30 @@ class UpdateChecker_Private {
         std::ifstream t(absolute);
         std::stringstream buffer;
         buffer << t.rdbuf();
-        spdlog::info("UpdateChecker : Local manifest found at [{}]", absolute.string());
+        spdlog::info("[IFW] UpdateChecker : Local manifest found at [{}]", absolute.string());
 
         //
         return buffer.str();
     }
 
+    //
+    //
+    //
+
+    static auto _extractTagNameFromGithubReleaseManifest(std::string& manifestContent) {
+        return _extractVersionsFromManifestRaw(R"|(\"(tag_name)\": \"(.*?)\")|", manifestContent);
+    }
+
     static auto _extractVersionsFromManifest(std::string manifestContent) {
+        return _extractVersionsFromManifestRaw(R"|(<Name>(.*?)<\/Name>.*?<Version>(.*?)<\/Version>)|", manifestContent);
+    }
+
+    static std::map<std::string, std::string> _extractVersionsFromManifestRaw(const char* regex, std::string manifestContent) {
         // remove newline
         manifestContent.erase(std::remove(manifestContent.begin(), manifestContent.end(), '\n'), manifestContent.end());
 
         //
-        std::regex findVersionExp(R"|(<Name>(.*?)<\/Name>.*?<Version>(.*?)<\/Version>)|");
+        std::regex findVersionExp(regex);
         std::smatch match;
         std::map<std::string, std::string> out;
 
@@ -99,6 +113,10 @@ class UpdateChecker_Private {
         return out;
     }
 
+    //
+    //
+    //
+
     static bool _isRemoteVersionNewerThanLocal(const std::string &localVersion, const std::string &remoteVersion) {
         return localVersion < remoteVersion;
     }
@@ -132,7 +150,13 @@ class UpdateChecker : private UpdateChecker_Private {
         RemoteManifestRead
     };
 
+    enum class CheckSource {
+        GithubCheck,
+        IFWCheck,
+    };
+
     struct CheckResults {
+        CheckSource source;
         CheckCode result = CheckCode::UnspecifiedFail;
         bool hasNewerVersion = false;
     };
@@ -147,14 +171,20 @@ class UpdateChecker : private UpdateChecker_Private {
 
     std::string _getRemoteManifestContent() const {
         // else, try to download it
-        spdlog::info("UpdateChecker : Downloading remote manifest [{}]", _remoteManifestURL);
+        spdlog::info("[IFW] UpdateChecker : Downloading remote manifest [{}]", _remoteManifestURL);
+        return Downloader::dumbGet(_remoteManifestURL).messageBody;
+    }
+
+    auto _getGithubLatestReleaseFrom(const char * repositoryOwnerName, const char * repositoryName) const {
+        auto _remoteManifestURL = std::string("https://api.github.com/repos/") + std::string(repositoryOwnerName) + "/" + std::string(repositoryName) + "/releases/latest";
+        spdlog::info("[Github] UpdateChecker : Downloading remote releases manifest [{}]", _remoteManifestURL);
         return Downloader::dumbGet(_remoteManifestURL).messageBody;
     }
 
     // returns if successfully requested updater to run
     static bool tryToLaunchUpdater(const std::filesystem::path &updaterPath = _expectedMaintenanceToolPath()) {
         if (!std::filesystem::exists(updaterPath)) {
-            spdlog::warn("UpdateChecker : Cannot find updater at [{}], aborting", updaterPath.string());
+            spdlog::warn("[IFW] UpdateChecker : Cannot find updater at [{}], aborting", updaterPath.string());
             return false;
         }
 
@@ -165,7 +195,7 @@ class UpdateChecker : private UpdateChecker_Private {
             std::vector<TinyProcessLib::Process::string_type> args {updaterPath.string(), "--updater"};
         #endif
 
-        spdlog::info("UpdateChecker : Launching updater [{}] ...", updaterPath.string());
+        spdlog::info("[IFW] UpdateChecker : Launching updater [{}] ...", updaterPath.string());
         
             TinyProcessLib::Process run(args);
 
@@ -177,40 +207,92 @@ class UpdateChecker : private UpdateChecker_Private {
  private:
     const std::string _remoteManifestURL;
 
+    const CheckResults _gh_isNewerVersionAvailable() const {
+        //
+        if (strlen(GITHUB_REPO_OWNER) == 0 || strlen(GITHUB_REPO_NAME) == 0) {
+            spdlog::info("[Github] UpdateChecker : GITHUB_REPO_OWNER or GITHUB_REPO_NAME not configured, cannot check updates against Github official repository.");
+        }
+
+        auto ghLatestRelease = _getGithubLatestReleaseFrom(GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+
+        // if no remoteManifest given, skip
+        if(ghLatestRelease.empty()) {
+            spdlog::warn("[Github] UpdateChecker : could not download remote manifest !");
+            return {CheckSource::GithubCheck, CheckCode::RemoteManifestFetch };
+        }
+
+        auto ghRemote = _extractTagNameFromGithubReleaseManifest(ghLatestRelease);
+        
+        // if no remoteManifest given, skip
+        if(!ghRemote.size()) {
+            spdlog::warn("[Github] UpdateChecker : no remote manifest version found !");
+            return {CheckSource::GithubCheck, CheckCode::RemoteManifestRead };
+        }
+
+        //
+        auto &remoteVersion = ghRemote.begin()->second;
+        spdlog::info("[Github] UpdateChecker : remote version {}", remoteVersion);
+
+        // compare versions
+        auto isNewer = _isRemoteVersionNewerThanLocal(APP_CURRENT_VERSION, remoteVersion);
+        if (isNewer) {
+            spdlog::info("[Github] UpdateChecker : Local version [{}] older than remote [{}]", APP_CURRENT_VERSION, remoteVersion);
+        } else {
+            spdlog::info("[Github] UpdateChecker : No components to be updated");
+        }
+
+        return {CheckSource::GithubCheck, CheckCode::Succeeded, isNewer};
+    }
+
     const CheckResults _isNewerVersionAvailable() const {
+        //
+        spdlog::info("UpdateChecker : local version is \"{}\"", APP_CURRENT_VERSION);
+
+        //
+        //
+
         //
         spdlog::info("UpdateChecker : Checking updates...");
 
+        //
+        auto ghCheck = _gh_isNewerVersionAvailable();
+        if (ghCheck.result == CheckCode::Succeeded) {
+            return ghCheck;
+        }
+
+        //
+        //
+
         // if no remoteManifest given, skip
         if(_remoteManifestURL.empty()) {
-            spdlog::warn("UpdateChecker : no remote manifest url configured !");
-            return { CheckCode::NoRemoteURL };
+            spdlog::warn("[IFW] UpdateChecker : no remote manifest url configured !");
+            return {CheckSource::IFWCheck, CheckCode::NoRemoteURL };
         }
 
         // fetch local
         auto localRaw = _getLocalManifestContent();
         if (localRaw.empty()) {
             _manifestFetchingFailed("local");
-            return { CheckCode::LocalManifestFetch };
+            return {CheckSource::IFWCheck, CheckCode::LocalManifestFetch };
         }
 
         auto localComponents = _extractVersionsFromManifest(localRaw);
         if (!localComponents.size()) {
             _manifestFetchingFailed("local");
-            return { CheckCode::LocalManifestRead };
+            return {CheckSource::IFWCheck, CheckCode::LocalManifestRead };
         }
 
         // fetch remote
         auto remoteRaw = _getRemoteManifestContent();
         if (remoteRaw.empty()) {
             _manifestFetchingFailed("remote");
-            return { CheckCode::RemoteManifestFetch };
+            return {CheckSource::IFWCheck, CheckCode::RemoteManifestFetch };
         }
 
         auto remoteVersions = _extractVersionsFromManifest(remoteRaw);
         if (!remoteVersions.size()) {
             _manifestFetchingFailed("remote");
-            return { CheckCode::RemoteManifestRead };
+            return {CheckSource::IFWCheck, CheckCode::RemoteManifestRead };
         }
 
         // iterate through local components
@@ -218,36 +300,36 @@ class UpdateChecker : private UpdateChecker_Private {
             // if local component not found on remote, needs update
             auto foundOnRemote = remoteVersions.find(component);
             if (foundOnRemote == remoteVersions.end()) {
-                spdlog::info("UpdateChecker : Local component [{}] not found on remote", component);
-                return {CheckCode::Succeeded, true};
+                spdlog::info("[IFW] UpdateChecker : Local component [{}] not found on remote", component);
+                return {CheckSource::IFWCheck, CheckCode::Succeeded, true};
             }
 
             // compare versions
             auto &remoteVersion = foundOnRemote->second;
             auto isNewer = _isRemoteVersionNewerThanLocal(localVersion, remoteVersion);
             if (isNewer) {
-                spdlog::info("UpdateChecker : Local component [{} : {}] older than remote [{}]", component, localVersion, remoteVersion);
-                return {CheckCode::Succeeded, true};
+                spdlog::info("[IFW] UpdateChecker : Local component [{} : {}] older than remote [{}]", component, localVersion, remoteVersion);
+                return {CheckSource::IFWCheck, CheckCode::Succeeded, true};
             }
 
             // if not older, remove from remote
-            spdlog::info("UpdateChecker : Local component [{}] up-to-date", component);
+            spdlog::info("[IFW] UpdateChecker : Local component [{}] up-to-date", component);
             remoteVersions.erase(component);
         }
 
         // if any components remaining in remote, has updates
         if (remoteVersions.size()) {
             auto &firstComponent = remoteVersions.begin()->first;
-            spdlog::info("UpdateChecker : Remote component [{}] not found in local", firstComponent);
-            return {CheckCode::Succeeded, true};
+            spdlog::info("[IFW] UpdateChecker : Remote component [{}] not found in local", firstComponent);
+            return {CheckSource::IFWCheck, CheckCode::Succeeded, true};
         }
 
         //
-        spdlog::info("UpdateChecker : No components to be updated");
-        return {CheckCode::Succeeded, false};
+        spdlog::info("[IFW] UpdateChecker : No components to be updated");
+        return {CheckSource::IFWCheck, CheckCode::Succeeded, false};
     }
 
     static void _manifestFetchingFailed(const char* manifestType) {
-        spdlog::warn("UpdateChecker : Error while fetching {} manifest !", manifestType);
+        spdlog::warn("[IFW] UpdateChecker : Error while fetching {} manifest !", manifestType);
     }
 };
