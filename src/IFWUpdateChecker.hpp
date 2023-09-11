@@ -101,6 +101,11 @@ class UpdateChecker_Private {
 
                 // store version
                 auto version = group.str();
+
+                // remove any "v" from versioning number
+                version.erase(std::remove(version.begin(), version.end(), 'v'), version.end());
+                
+                //
                 out.insert_or_assign(key, version);
                 break;
             }
