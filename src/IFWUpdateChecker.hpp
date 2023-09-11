@@ -61,7 +61,7 @@ class UpdateChecker_Private {
     //
 
     static auto _extractTagNameFromGithubReleaseManifest(std::string& manifestContent) {
-        return _extractVersionsFromManifestRaw(R"|(\"(tag_name)\": \"(.*?)\")|", manifestContent);
+        return _extractVersionsFromManifestRaw(R"|(\"(tag_name)\":\"(.*?)\")|", manifestContent);
     }
 
     static auto _extractVersionsFromManifest(std::string manifestContent) {
@@ -238,7 +238,7 @@ class UpdateChecker : private UpdateChecker_Private {
         if (isNewer) {
             spdlog::info("[Github] UpdateChecker : Local version [{}] older than remote [{}]", APP_CURRENT_VERSION, remoteVersion);
         } else {
-            spdlog::info("[Github] UpdateChecker : No components to be updated");
+            spdlog::info("[Github] UpdateChecker : Same remote and local versions; nothing to be updated.");
         }
 
         return {CheckSource::GithubCheck, CheckCode::Succeeded, isNewer};
