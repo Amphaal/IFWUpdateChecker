@@ -29,7 +29,7 @@
             }
         }
     },
-    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.defaultProfile.windows": "Msys2 Shell",
     "terminal.integrated.scrollback": 10000,
     "files.associations": {
         "iosfwd": "cpp",

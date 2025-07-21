@@ -12,34 +12,35 @@
                 "command": "git submodule update --init --recursive"
         },
         {
-            "label": "2. Generate Project files",
+            "label": "2. Generate Project files (Debug)",
             "group": {
                 "isDefault": true,
                 "kind": "test"
             },
             "type": "shell",
             "windows": {
-                "command": "cmake -GNinja -Bbuild -H. -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/msys2.cmake"
+                "command": "cmake -GNinja -Bbuild_debug -H. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/msys2.cmake"
             },
             "osx": {
-                "command": "cmake -GNinja -Bbuild -H. -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/osx.cmake"
+                "command": "cmake -GNinja -Bbuild_debug -H. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/osx.cmake"
             },
         },
         {
-            "label": "2+. Build",
+            "label": "2+. Build (Debug)",
             "type": "shell",
             "command": "ninja",
+            "dependsOn": "2. Generate Project files (Debug)",
             "options": {
-                "cwd": "${workspaceRoot}/build"
+                "cwd": "${workspaceRoot}/build_debug"
             },
             "problemMatcher": []
         },
         {
-            "label": "2. Build and test",
+            "label": "2. Build and test (Debug)",
             "type": "shell",
             "command": "ninja;cd tests;ctest",
             "options": {
-                "cwd": "${workspaceRoot}/build"
+                "cwd": "${workspaceRoot}/build_debug"
             },
             "problemMatcher": []
         }

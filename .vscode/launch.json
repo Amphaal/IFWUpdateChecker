@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Lancer",
+            "name": "Run Tests (Debug)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/tests/IFWUC_tests",
+            "program": "${workspaceFolder}/build_debug/tests/IFWUC_tests",
             "windows": {
-                "program": "${workspaceFolder}/build/tests/IFWUC_tests.exe",
+                "program": "${workspaceFolder}/build_debug/tests/IFWUC_tests.exe",
                 "miDebuggerPath": "${env:MINGW64_ROOT}\\bin\\gdb.exe",
                 "MIMode": "gdb",
                 "setupCommands": [
@@ -26,7 +26,7 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "MIMode": "lldb",
-            "preLaunchTask": "2+. Build"
+            "preLaunchTask": "2+. Build (Debug)"
         }
     ]
 }

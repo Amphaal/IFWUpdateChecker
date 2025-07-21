@@ -4,7 +4,7 @@ add_executable(IFWUC_tests tests.cpp)
 
 target_link_libraries(IFWUC_tests
     IFWUpdateChecker
-    Catch2::Catch2
+    Catch2::Catch2WithMain
     spdlog::spdlog
 )
 

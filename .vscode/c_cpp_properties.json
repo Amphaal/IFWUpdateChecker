@@ -14,7 +14,9 @@
                 "${workspaceFolder}",
                 "${workspaceFolder}/deps/tiny-process-library",
                 "${workspaceFolder}/deps/StupidHTTPDownloader/include",
-                "${workspaceFolder}/src"
+                "${workspaceFolder}/src",
+                //
+                "${workspaceFolder}/build_debug/generated"
             ],
             "defines": [
                 "_DEBUG",
