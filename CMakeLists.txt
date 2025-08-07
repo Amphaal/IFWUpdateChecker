@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 
 project(IFWUpdateChecker
-    VERSION 0.0.2
-    DESCRIPTION "In-app simple helper to check if a Qt IFW package has updates"
+    VERSION 0.0.3
+    DESCRIPTION "C++ library that checks for available updates of a bundled executable though multiple sources"
     HOMEPAGE_URL "https://github.com/Amphaal/IFWUpdateChecker"
     LANGUAGES CXX
 )

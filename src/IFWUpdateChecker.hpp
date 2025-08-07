@@ -1,6 +1,6 @@
 // IFWUpdateChecker
-// In-app simple helper to check if a Qt IFW package has updates
-// Copyright (C) 2021 Guillaume Vara <guillaume.vara@gmail.com>
+// C++ library that checks for available updates of a bundled executable though multiple sources
+// Copyright (C) 2021-2025 Guillaume Vara <guillaume.vara@gmail.com>
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
